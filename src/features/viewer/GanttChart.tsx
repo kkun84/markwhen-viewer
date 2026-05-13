@@ -1,6 +1,6 @@
 import { useEffect, useRef } from 'react'
 import Gantt from 'frappe-gantt'
-import 'frappe-gantt/dist/frappe-gantt.css'
+import '../../styles/frappe-gantt.css'
 import type { GanttTask } from '@/domain/markwhen'
 import type { GanttViewMode } from './viewMode'
 
