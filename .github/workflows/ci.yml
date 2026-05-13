@@ -4,10 +4,14 @@ on:
     branches: [main]
   pull_request:
     types: [opened, synchronize, reopened, closed]
+concurrency:
+  group: pages-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
     if: github.event.action != 'closed'
   deploy_main:
       contents: write
-      - name: メタデータを出力
+      - name: main配信用アーティファクトを組み立て
         run: |
           mkdir -p dist
           cat > dist/preview-meta.json <<EOF
@@ -18,36 +22,31 @@ on:
             "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-      - name: main の latest を更新
-        uses: peaceiris/actions-gh-pages@v4
+          mkdir -p .pages/latest .pages/releases/${GITHUB_SHA}
+          cp -R dist/. .pages/latest/
+          cp -R dist/. .pages/releases/${GITHUB_SHA}/
+      - uses: peaceiris/actions-gh-pages@v4
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: latest
+          publish_dir: ./.pages
           keep_files: true
-      - name: main のコミット別アーカイブを保存
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: releases/${{ github.sha }}
-          keep_files: true
-      - name: main のアーカイブを直近50件に制限
+      - name: mainアーカイブを直近50件に整理
         run: |
-          git fetch origin gh-pages
-          git checkout -B gh-pages-cleanup origin/gh-pages
-          if [ -d releases ]; then
-            ls -1t releases | tail -n +51 | while read -r old; do
-              rm -rf "releases/${old}"
-            done
-          fi
-          if ! git diff --quiet; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m "chore: mainアーカイブの古い履歴を削除"
-            git push origin gh-pages-cleanup:gh-pages
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git checkout -B gh-pages-cleanup origin/gh-pages
+            if [ -d releases ]; then
+              ls -1t releases | tail -n +51 | while read -r old; do
+                rm -rf "releases/${old}"
+              done
+            fi
+            if ! git diff --quiet; then
+              git config user.name github-actions[bot]
+              git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+              git add -A
+              git commit -m "chore: mainアーカイブの古い履歴を削除"
+              git push origin gh-pages-cleanup:gh-pages
+            fi
           fi
 
   deploy_preview:
@@ -65,49 +64,46 @@ on:
           name: nix-community
       - run: nix develop --accept-flake-config --command pnpm install --frozen-lockfile
       - run: nix develop --accept-flake-config --command pnpm build
-      - name: メタデータを出力
+      - name: PR配信用アーティファクトを組み立て
         run: |
           mkdir -p dist
+          pr="${{ github.event.pull_request.number }}"
+          sha="${GITHUB_SHA}"
           cat > dist/preview-meta.json <<EOF
           {
             "type": "pull_request",
-            "pr": "${{ github.event.pull_request.number }}",
-            "commit": "${GITHUB_SHA}",
+            "pr": "${pr}",
+            "commit": "${sha}",
             "generatedAt": "$(date -u +%Y-%m-%dT%H:%M:%SZ)"
           }
           EOF
-      - name: PR の latest を更新
-        uses: peaceiris/actions-gh-pages@v4
+          mkdir -p .pages/previews/pr-${pr}/latest .pages/previews/pr-${pr}/${sha}
+          cp -R dist/. .pages/previews/pr-${pr}/latest/
+          cp -R dist/. .pages/previews/pr-${pr}/${sha}/
+      - uses: peaceiris/actions-gh-pages@v4
         with:
           github_token: ${{ secrets.GITHUB_TOKEN }}
           publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: previews/pr-${{ github.event.pull_request.number }}/latest
+          publish_dir: ./.pages
           keep_files: true
-      - name: PR のコミット別アーカイブを保存
-        uses: peaceiris/actions-gh-pages@v4
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_branch: gh-pages
-          publish_dir: ./dist
-          destination_dir: previews/pr-${{ github.event.pull_request.number }}/${{ github.sha }}
-          keep_files: true
-      - name: PR のアーカイブを直近20件に制限
+      - name: PRアーカイブを直近20件に整理
         run: |
-          git fetch origin gh-pages
-          git checkout -B gh-pages-cleanup origin/gh-pages
-          dir="previews/pr-${{ github.event.pull_request.number }}"
-          if [ -d "$dir" ]; then
-            ls -1t "$dir" | grep -v '^latest$' | tail -n +21 | while read -r old; do
-              rm -rf "$dir/${old}"
-            done
-          fi
-          if ! git diff --quiet; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m "chore: PRプレビューの古い履歴を削除"
-            git push origin gh-pages-cleanup:gh-pages
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git checkout -B gh-pages-cleanup origin/gh-pages
+            dir="previews/pr-${{ github.event.pull_request.number }}"
+            if [ -d "$dir" ]; then
+              ls -1t "$dir" | grep -v '^latest$' | tail -n +21 | while read -r old; do
+                rm -rf "$dir/${old}"
+              done
+            fi
+            if ! git diff --quiet; then
+              git config user.name github-actions[bot]
+              git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+              git add -A
+              git commit -m "chore: PRプレビューの古い履歴を削除"
+              git push origin gh-pages-cleanup:gh-pages
+            fi
           fi
       - name: PRコメントにプレビューURLを投稿
         uses: actions/github-script@v7
@@ -127,12 +123,7 @@ on:
               `- commit: ${commitUrl}`,
               `- SHA: ${sha}`,
             ].join('\n')
-            await github.rest.issues.createComment({
-              owner,
-              repo,
-              issue_number: pr,
-              body,
-            })
+            await github.rest.issues.createComment({ owner, repo, issue_number: pr, body })
 
   cleanup_preview:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
@@ -143,15 +134,17 @@ on:
       - uses: actions/checkout@v4
       - name: PRクローズ時にプレビューを削除
         run: |
-          git fetch origin gh-pages
-          git checkout -B gh-pages-cleanup origin/gh-pages
-          rm -rf "previews/pr-${{ github.event.pull_request.number }}"
-          if ! git diff --quiet; then
-            git config user.name github-actions[bot]
-            git config user.email 41898282+github-actions[bot]@users.noreply.github.com
-            git add -A
-            git commit -m "chore: クローズしたPRのプレビューを削除"
-            git push origin gh-pages-cleanup:gh-pages
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null 2>&1; then
+            git fetch origin gh-pages
+            git checkout -B gh-pages-cleanup origin/gh-pages
+            rm -rf "previews/pr-${{ github.event.pull_request.number }}"
+            if ! git diff --quiet; then
+              git config user.name github-actions[bot]
+              git config user.email 41898282+github-actions[bot]@users.noreply.github.com
+              git add -A
+              git commit -m "chore: クローズしたPRのプレビューを削除"
+              git push origin gh-pages-cleanup:gh-pages
+            fi
           fi
       - uses: actions/checkout@v4
       - uses: cachix/install-nix-action@v31
