@@ -1,0 +1,5 @@
+:root { font-family: Inter, system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
+body { margin: 0; }
+main { max-width: 960px; margin: 0 auto; padding: 24px; }
+textarea { width: 100%; min-height: 220px; font-family: ui-monospace, SFMono-Regular, monospace; }
+pre { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; overflow: auto; }
