@@ -8,6 +8,11 @@ export type GanttTask = {
   readonly progress: number
 }
 
+export type ParseResult = {
+  readonly tasks: readonly GanttTask[]
+  readonly error?: string
+}
+
 const toDate = (isoDateTime: string): string => isoDateTime.slice(0, 10)
 
 const toGanttTask = (
@@ -38,4 +43,12 @@ export const parseMarkwhen = (source: string): readonly GanttTask[] => {
     const task = toGanttTask(`task-${tasks.length + 1}`, eventy)
     return task ? [...tasks, task] : tasks
   }, [])
+}
+
+export const parseMarkwhenSafe = (source: string): ParseResult => {
+  try {
+    return { tasks: parseMarkwhen(source) }
+  } catch (error) {
+    return { tasks: [], error: error instanceof Error ? error.message : '解析に失敗しました。' }
+  }
 }

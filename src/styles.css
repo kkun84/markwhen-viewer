@@ -2,6 +2,54 @@
 
 :root { font-family: Inter, system-ui, sans-serif; color: #0f172a; background: #f8fafc; }
 body { margin: 0; }
-main { max-width: 960px; margin: 0 auto; padding: 24px; }
+main { max-width: 1200px; margin: 0 auto; padding: 24px; }
 textarea { width: 100%; min-height: 220px; font-family: ui-monospace, SFMono-Regular, monospace; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; }
 pre { background: #fff; border: 1px solid #cbd5e1; border-radius: 8px; padding: 12px; overflow: auto; }
+
+.gantt-stage {
+  overflow: hidden;
+  border: 1px solid #cbd5e1;
+  border-radius: 8px;
+  background: white;
+  min-height: 520px;
+}
+
+.gantt-shell {
+  display: grid;
+  gap: 10px;
+}
+
+.gantt-toolbar {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+  flex-wrap: wrap;
+}
+
+.gantt-toolbar button {
+  border: 1px solid #cbd5e1;
+  background: #fff;
+  border-radius: 8px;
+  padding: 4px 10px;
+}
+
+.gantt-interactive {
+  touch-action: none;
+  cursor: grab;
+  transform-origin: 0 0;
+  will-change: transform;
+  outline: none;
+}
+
+.gantt-interactive.is-dragging {
+  cursor: grabbing;
+}
+
+.gantt-shortcut { margin: 0; color: #64748b; font-size: 12px; }
+.gantt-toolbar button:disabled { opacity: 0.45; }
+
+.gantt-upload { border: 1px solid #cbd5e1; background: #fff; border-radius: 8px; padding: 4px 10px; cursor: pointer; }
+.gantt-upload input { display: none; }
+
+.gantt-filter { width: 100%; margin-top: 8px; border: 1px solid #cbd5e1; border-radius: 8px; padding: 8px 10px; }
+.gantt-error { margin: 8px 0 0; color: #b91c1c; font-size: 13px; }
