@@ -53,7 +53,7 @@ concurrency:
     if: github.event_name == 'pull_request' && github.event.action != 'closed'
     needs: test
     runs-on: ubuntu-latest
-    permissions:
+    if: github.event_name == 'pull_request' && github.event.action != 'closed' && github.event.pull_request.head.repo.full_name == github.repository
       contents: write
       pull-requests: write
     steps:
@@ -129,7 +129,7 @@ concurrency:
     if: github.event_name == 'pull_request' && github.event.action == 'closed'
     runs-on: ubuntu-latest
     permissions:
-      contents: write
+    if: github.event_name == 'pull_request' && github.event.action == 'closed' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
       - uses: actions/checkout@v4
       - name: PRクローズ時にプレビューを削除
