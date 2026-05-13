@@ -44,8 +44,13 @@ pnpm typecheck
 
 ## デプロイ
 
-`main`へのpushでGitHub Pagesに自動デプロイされます。
-CI/CDの全ジョブは`nix develop`経由で実行され、ローカルと同一の開発環境を再現します。
+GitHub Pagesの公開ブランチは`gh-pages`を利用します。
+
+- PR作成・更新時（`opened`/`synchronize`/`reopened`）に、`previews/pr-<PR番号>/<コミットSHA>/`へプレビューを自動公開
+- `main`マージ後は、`snapshots/<コミットSHA>/`へ本番スナップショットを永続保存
+- `main/latest/`は最新の`main`を常に指す参照先として更新
+
+これにより、PR段階の動作確認と、マージ後のデバッグ用スナップショット追跡を両立します。
 
 ## 品質維持の原則
 
