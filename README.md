@@ -12,7 +12,7 @@ GitHub Pagesで公開する、完全静的なMarkwhen Viewerです。
 
 - TypeScript + React + Vite
 - Honoでローカル開発時のミドルウェアを最小構成で提供
-- shadcn/ui構成のUIコンポーネント
+- shadcn/ui構成のUIコンポーネント（Button/Card）
 - 関数型スタイルでドメインロジックを分離
 - BDDスタイルの仕様テスト
 - pnpm + Nixで再現可能な開発環境
