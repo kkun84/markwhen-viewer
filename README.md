@@ -45,6 +45,7 @@ pnpm typecheck
 ## デプロイ
 
 `main`へのpushでGitHub Pagesに自動デプロイされます。
+CI/CDの全ジョブは`nix develop`経由で実行され、ローカルと同一の開発環境を再現します。
 
 ## 品質維持の原則
 
